@@ -22,7 +22,7 @@ with open("tareas.txt", "r") as i:
 with open(recursos.txt, "r") as j:
     recursos = []
 
-
+print("hola muando")
 
 
 # Pon esto al final de tu archivo main.py
