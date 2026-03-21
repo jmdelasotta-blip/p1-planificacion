@@ -19,10 +19,16 @@ with open("tareas.txt", "r") as i:
         id_tarea, duracion, categoria = line.strip().split(",")
         tareas.append(Tarea(id_tarea, int(duracion), categoria))
 
-with open(recursos.txt, "r") as j:
-    recursos = []
+#with open(recursos.txt, "r") as j:
+#    recursos = []
+#    for line in j:
+#        id_recursos, categoria= line.strip().splir(",")
+#        recursos.append(Recursos(id_recursos,categoria))
+#print(recursos)
+print(tareas)
 
-print("hola muando")
+
+
 
 
 # Pon esto al final de tu archivo main.py
