@@ -11,7 +11,7 @@ class Tarea:
 @dataclass
 class Recurso:
     id_recurso: str
-    categorias_soportadas: List[str]
+    categorias_soportadas: StopIteration
 
 with open("tareas.txt", "r") as i:
     tareas = []
@@ -19,19 +19,15 @@ with open("tareas.txt", "r") as i:
         id_tarea, duracion, categoria = line.strip().split(",")
         tareas.append(Tarea(id_tarea, int(duracion), categoria))
 
-#with open(recursos.txt, "r") as j:
-#    recursos = []
-#    for line in j:
-#        id_recursos, categoria= line.strip().splir(",")
-#        recursos.append(Recursos(id_recursos,categoria))
-#print(recursos)
-print(tareas)
-
-
-
-
-
+with open("recursos.txt", "r") as j:
+    recursos = []
+    for line in j:
+        id_recursos, categoria= line.strip().split(",")
+        recursos.append(Recurso(id_recursos, categoria))
+print(f"Estas son las tareas a asignar: {tareas}")
+print(f"Estas son las tareas a asignar: {recursos}")
+for m in recursos:
+    print(m)
+print(recursos[0])
 # Pon esto al final de tu archivo main.py
 print("¡Lectura terminada!")
-print(f"La primera tarea es: {tareas[0].id_tarea}")
-print(f"Esa tarea dura: {tareas[0].duracion} horas")
