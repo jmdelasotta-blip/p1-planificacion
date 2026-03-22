@@ -1,2 +1,15 @@
-Archivo con los resultados del algortimo y las asignación de tareas.
-Esta es la segunda línea.Tiempo trabjando por R1: 11Tiempo trabjando por R2: 15Tiempo trabjando por R3: 13Tareas asignadas a R1: ['T1', 'T5', 'T6', 'T1', 'T5', 'T6']Tareas asignadas a R2: ['T2', 'T7', 'T2', 'T7']Tareas asignadas a R3: ['T3', 'T4', 'T8', 'T3', 'T4', 'T8']
+Resultados del algoritmo de asignaciÃ³n
+
+Recurso R1:
+  Tiempo total: 12
+  Tareas: ['T7', 'T8']
+
+Recurso R2:
+  Tiempo total: 14
+  Tareas: ['T2', 'T1', 'T3']
+
+Recurso R3:
+  Tiempo total: 13
+  Tareas: ['T4', 'T6', 'T5']
+
+Makespan: 14
