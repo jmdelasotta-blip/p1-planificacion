@@ -48,7 +48,7 @@ def tksallocator():
     i=0
     while True:
         
-        if tareas[i][2]=='CAT_A':
+        if tareas[i][2]=='CAT_A'and r1counter<=r2counter and r1counter<=r3counter:
             r1counter=r1counter+tareas[i][1]
             r1queue.append(tareas[i][0])
             #tareas.remove(tareas[i])
@@ -57,7 +57,7 @@ def tksallocator():
             #print(f"el valor de pivote es 1:{i}")
             if i==8:
                 break
-        if tareas[i][2]=='CAT_A' and r1counter > r2counter:
+        elif tareas[i][2]=='CAT_A' and r1counter > r2counter:
             r2counter=r2counter+tareas[i][1]
             r2queue.append(tareas[i][0])
             #tareas.remove(tareas[i])
@@ -66,7 +66,7 @@ def tksallocator():
             #print(f"el valor de pivote es 2:{i}")
             if i==8:
                 break
-        if tareas[i][2]=='CAT_A' and r2counter > r3counter and r1counter>r3counter:
+        elif tareas[i][2]=='CAT_A' and r2counter > r3counter and r1counter>r3counter:
             r3counter=r3counter+tareas[i][1]
             r3queue.append(tareas[i][0])
             #tareas.remove(tareas[i])
@@ -82,6 +82,7 @@ def tksallocator():
     print(f"Tiempo trabjando por R2: {r2counter}")
     print(f"Tareas asignadas a R3: {r3queue}")
     print(f"Tiempo trabjando por R3: {r3counter}")
+    print(f"Makespan actual es:{max(r1counter,r2counter,r3counter)}")
 tksallocator()  
 
 
