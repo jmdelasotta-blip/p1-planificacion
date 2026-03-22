@@ -38,6 +38,47 @@ print(tkstime)
 r1queue=[]
 r2queue=[]
 r3queue=[]
+
+def tksallocator():
+    r1counter=0
+    r2counter=0
+    r3counter=0
+    i=0
+    while True:
+        
+        if tareas[i][2]=='CAT_A':
+            r1counter=r1counter+tareas[i][1]
+            r1queue.append(tareas[i][0])
+            #tareas.remove(tareas[i])
+            print(f"el contador del R1 es:{r1counter}")
+            i=i+1
+            print(f"el valor de pivote es 1:{i}")
+            if i==8:
+                break
+        if tareas[i][2]=='CAT_A' and r1counter > r2counter:
+            r2counter=r2counter+tareas[i][1]
+            r2queue.append(tareas[i][0])
+            #tareas.remove(tareas[i])
+            print(f"el contador del R2 es:{r2counter}")
+            i=i+1
+            print(f"el valor de pivote es 2:{i}")
+            if i==8:
+                break
+        if tareas[i][2]=='CAT_A' and r2counter > r3counter and r1counter>r3counter:
+            r3counter=r3counter+tareas[i][1]
+            r3queue.append(tareas[i][0])
+            #tareas.remove(tareas[i])
+            print(f"el contador del R3 es:{r3counter}")
+            i=i+1
+            print(f"el valor de pivote es 3:{i}")
+            if i==8:
+                break
+    print(f"valor total de los counters: {r1counter+r2counter+r3counter}")
+    print(f"Tareas asignadas a R1: {r1queue}")
+    print(f"Tareas asignadas a R2: {r2queue}")
+    print(f"Tareas asignadas a R3: {r3queue}")
+    print(f"Tareas que quedaron sin asignar: {tareas}")
+tksallocator()  
 def r1process():
     r1counter=0
     #Recurso 1 admite tareas 'CAT_A'
@@ -48,9 +89,10 @@ def r1process():
             tareas.remove(tareas[i])
             print(r1counter)
         break
+    else:
+        pass
 
-r1process()
-print(tareas)
+
 def r2process():
     pass
 def r3process():
