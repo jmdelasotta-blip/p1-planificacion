@@ -26,10 +26,12 @@ with open("recursos.txt", "r") as j:
         recursos.append((id_recursos, categoria))
 
 for i in range(len(recursos)):
-    print(recursos[i])
+    #print(recursos[i])
+    pass
 print(" ")
 for i in range(len(tareas)):
-    print(tareas[i])
+    #print(tareas[i])
+    pass
 tkstime=0
 for i in range(len(tareas)):
     tkstime=tkstime+tareas[i][1]
@@ -50,54 +52,37 @@ def tksallocator():
             r1counter=r1counter+tareas[i][1]
             r1queue.append(tareas[i][0])
             #tareas.remove(tareas[i])
-            print(f"el contador del R1 es:{r1counter}")
+            #print(f"el contador del R1 es:{r1counter}")
             i=i+1
-            print(f"el valor de pivote es 1:{i}")
+            #print(f"el valor de pivote es 1:{i}")
             if i==8:
                 break
         if tareas[i][2]=='CAT_A' and r1counter > r2counter:
             r2counter=r2counter+tareas[i][1]
             r2queue.append(tareas[i][0])
             #tareas.remove(tareas[i])
-            print(f"el contador del R2 es:{r2counter}")
+            #print(f"el contador del R2 es:{r2counter}")
             i=i+1
-            print(f"el valor de pivote es 2:{i}")
+            #print(f"el valor de pivote es 2:{i}")
             if i==8:
                 break
         if tareas[i][2]=='CAT_A' and r2counter > r3counter and r1counter>r3counter:
             r3counter=r3counter+tareas[i][1]
             r3queue.append(tareas[i][0])
             #tareas.remove(tareas[i])
-            print(f"el contador del R3 es:{r3counter}")
+            #print(f"el contador del R3 es:{r3counter}")
             i=i+1
-            print(f"el valor de pivote es 3:{i}")
+            #print(f"el valor de pivote es 3:{i}")
             if i==8:
                 break
     print(f"valor total de los counters: {r1counter+r2counter+r3counter}")
     print(f"Tareas asignadas a R1: {r1queue}")
+    print(f"Tiempo trabjando por R1: {r1counter}")
     print(f"Tareas asignadas a R2: {r2queue}")
+    print(f"Tiempo trabjando por R2: {r2counter}")
     print(f"Tareas asignadas a R3: {r3queue}")
-    print(f"Tareas que quedaron sin asignar: {tareas}")
+    print(f"Tiempo trabjando por R3: {r3counter}")
 tksallocator()  
-def r1process():
-    r1counter=0
-    #Recurso 1 admite tareas 'CAT_A'
-    for i in range(len(tareas)):
-        if tareas[i][2]=='CAT_A':
-            r1counter=r1counter+tareas[i][1]
-            r1queue.append(tareas[i][0])
-            tareas.remove(tareas[i])
-            print(r1counter)
-        break
-    else:
-        pass
-
-
-def r2process():
-    pass
-def r3process():
-    pass
-
 
 
 
