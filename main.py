@@ -97,5 +97,4 @@ with open("mis_resultados.txt", "w") as archivo_nuevo:
     archivo_nuevo.write(f"Tareas asignadas a R1: {r1queue}")
     archivo_nuevo.write(f"Tareas asignadas a R2: {r2queue}")
     archivo_nuevo.write(f"Tareas asignadas a R3: {r3queue}")
-
-print("cambios de prueba")
+print("Prueba pablo")
