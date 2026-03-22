@@ -76,17 +76,24 @@ def tksallocator():
             if i==8:
                 break
     print(f"valor total de los counters: {r1counter+r2counter+r3counter}")
-    print(f"Tareas asignadas a R1: {r1queue}")
-    print(f"Tiempo trabjando por R1: {r1counter}")
-    print(f"Tareas asignadas a R2: {r2queue}")
+    print(f"Tiempo trabjando por R1: {r1counter}")        
     print(f"Tiempo trabjando por R2: {r2counter}")
+    print(f"Tiempo trabjando por R3: {r3counter}")           
+    print(f"Tareas asignadas a R1: {r1queue}")
+    print(f"Tareas asignadas a R2: {r2queue}")
     print(f"Tareas asignadas a R3: {r3queue}")
-    print(f"Tiempo trabjando por R3: {r3counter}")
     print(f"Makespan actual es:{max(r1counter,r2counter,r3counter)}")
+    return(r1counter,r2counter,r3counter)
 tksallocator()  
 
-
+r1counter, r2counter, r3counter = tksallocator()
 
 with open("mis_resultados.txt", "w") as archivo_nuevo:
-    archivo_nuevo.write("Hola, este es mi primer texto guardado.\n")
+    archivo_nuevo.write("Archivo con los resultados del algortimo y las asignación de tareas.\n")
     archivo_nuevo.write("Esta es la segunda línea.")
+    archivo_nuevo.write(f"Tiempo trabjando por R1: {r1counter}")        
+    archivo_nuevo.write(f"Tiempo trabjando por R2: {r2counter}")
+    archivo_nuevo.write(f"Tiempo trabjando por R3: {r3counter}")           
+    archivo_nuevo.write(f"Tareas asignadas a R1: {r1queue}")
+    archivo_nuevo.write(f"Tareas asignadas a R2: {r2queue}")
+    archivo_nuevo.write(f"Tareas asignadas a R3: {r3queue}")
