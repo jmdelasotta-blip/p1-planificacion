@@ -1,7 +1,0 @@
-Digrama de planificacion de estrategia para la minimizacion del makespan 
-formato de datos:   
-definición de variables: 
-                        t: makespan (tiempo de completar las tareas)
-                        
-Crear variable bianria de uso de recursos. Para identificar si está en uso o no
-
