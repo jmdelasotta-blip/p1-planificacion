@@ -95,6 +95,10 @@ def tksallocator():
         # Guardamos la línea en formato perfecto para el txt
         linea = f"{tarea.id_tarea},{recurso_elegido},{tiempo_inicio},{tiempo_fin}"
         cronograma_final.append(linea)
+    makespan_final = max(contadores_tiempo.values())
+    print(f"\n ¡Trabajo terminado!")
+    print(f"Makespan objetivo pedido: {makespan_objetivo}")
+    print(f"Makespan logrado por tu algoritmo: {makespan_final}\n")
 
     return cronograma_final
 
