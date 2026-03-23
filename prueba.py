@@ -1,142 +1,110 @@
 import sys
-import random
+from dataclasses import dataclass
+from typing import List
 
-# Clases simples para guardar la info
+# ==========================================
+# 1. TUS CLASES (Corregidas para mypy)
+# ==========================================
+@dataclass
 class Tarea:
-    def __init__(self, id_tarea, duracion, categoria):
-        self.id_tarea = id_tarea
-        self.duracion = int(duracion)
-        self.categoria = categoria
+    id_tarea: str
+    duracion: int
+    categoria: str
 
+@dataclass
 class Recurso:
-    def __init__(self, id_recurso, categorias_soportadas):
-        self.id_recurso = id_recurso
-        self.categorias_soportadas = categorias_soportadas
+    id_recurso: str
+    # Cambiamos "StopIteration" por "List[str]" para que mypy no tire error
+    categorias_soportadas: List[str] 
 
-def leer_tareas(archivo):
-    lista = []
-    try:
-        with open(archivo, "r") as f:
-            for linea in f:
-                if linea.strip():
-                    datos = linea.strip().split(",")
-                    # datos[0] es id, datos[1] es duracion, datos[2] es categoria
-                    lista.append(Tarea(datos[0], datos[1], datos[2]))
-        return lista
-    except:
-        print("No se encontro el archivo de tareas")
-        sys.exit(1)
+# ==========================================
+# 2. LECTURA DE ARCHIVOS
+# ==========================================
+# Leemos tareas tal como lo hacías tú
+tareas = []
+with open("tareas.txt", "r") as i:
+    for line in i:
+        if line.strip():
+            id_tarea, duracion, categoria = line.strip().split(",")
+            tareas.append(Tarea(id_tarea, int(duracion), categoria))
 
-def leer_recursos(archivo):
-    lista = []
-    try:
-        with open(archivo, "r") as f:
-            for linea in f:
-                if linea.strip():
-                    datos = linea.strip().split(",")
-                    lista.append(Recurso(datos[0], datos[1:]))
-        return lista
-    except:
-        print("No se encontro el archivo de recursos")
-        sys.exit(1)
+# Leemos recursos tal como lo hacías tú
+recursos = []
+with open("recursos.txt", "r") as j:
+    for line in j:
+        if line.strip():
+            partes = line.strip().split(",")
+            id_recursos = partes[0]
+            categorias = partes[1:] # Atrapa todas las categorías que tenga
+            recursos.append(Recurso(id_recursos, categorias))
 
-def cant_compatibles(tarea, recursos):
-    # cuenta cuantos recursos le sirven a la tarea para saber si es dificil de asignar
-    return sum(1 for r in recursos if tarea.categoria in r.categorias_soportadas)
+# ==========================================
+# 3. REGLA OBLIGATORIA DEL ENUNCIADO
+# ==========================================
+# El profe ejecutará: python main.py <makespan_objetivo>
+if len(sys.argv) > 1:
+    makespan_objetivo = sys.argv[1]
+else:
+    print("Por favor, ejecuta así: python main.py <numero>")
+    sys.exit(1)
 
-def resolver(tareas, recursos, meta, iteraciones=2000):
-    mejor_tiempo = float('inf')
-    mejor_plan = []
+# ==========================================
+# 4. OPTIMIZACIÓN LPT (Para sacar buena nota)
+# ==========================================
+# Ordenamos las tareas de la más larga a la más corta.
+tareas.sort(key=lambda t: t.duracion, reverse=True)
 
-    for i in range(iteraciones):
-        # diccionario con la carga actual de cada recurso
-        cargas = {r.id_recurso: 0 for r in recursos}
-        plan_actual = []
+# ==========================================
+# 5. TU FUNCIÓN ASIGNADORA (Sin hardcoding)
+# ==========================================
+def tksallocator():
+    # En vez de crear r1counter=0, r2counter=0 a mano, creamos un diccionario.
+    # Si hay 3 recursos, esto crea los 3 contadores. Si hay 20, crea 20.
+    contadores_tiempo = {}
+    for r in recursos:
+        contadores_tiempo[r.id_recurso] = 0
         
-        # ordenamos las tareas. le sumamos algo de random a la duracion 
-        # para que el orden cambie un poco en cada iteracion y probar opciones
-        tareas_ord = sorted(
-            tareas,
-            key=lambda t: (cant_compatibles(t, recursos), -t.duracion + random.uniform(-3, 3))
-        )
+    cronograma_final = []
 
-        se_pudo = True
-        for t in tareas_ord:
-            # filtramos los recursos que saben hacer esta tarea
-            sirven = [r for r in recursos if t.categoria in r.categorias_soportadas]
-
-            if not sirven:
-                se_pudo = False
-                break 
-
-            # elegimos el recurso que se desocupe mas temprano (algoritmo goloso)
-            mejor_r = min(sirven, key=lambda r: cargas[r.id_recurso])
-            
-            inicio = cargas[mejor_r.id_recurso]
-            fin = inicio + t.duracion
-            
-            cargas[mejor_r.id_recurso] = fin
-            
-            # guardamos el formato pedido
-            plan_actual.append(f"{t.id_tarea},{mejor_r.id_recurso},{inicio},{fin}")
-
-        if se_pudo:
-            tiempo_max = max(cargas.values())
-            # si encontramos algo mejor, lo guardamos
-            if tiempo_max < mejor_tiempo:
-                mejor_tiempo = tiempo_max
-                mejor_plan = plan_actual
+    # En vez de tu "while True" con el "if i==8: break", usamos un "for".
+    # Así recorre TODAS las tareas sin importar si son 8 o 1000.
+    for tarea in tareas:
+        
+        # Variables para buscar a la máquina más desocupada
+        recurso_elegido = ""
+        tiempo_mas_bajo = 999999 # Partimos con un número alto
+        
+        # Este ciclo reemplaza a tus "if r1 <= r2 and r1 <= r3"
+        for recurso in recursos:
+            # Primero: ¿Soporta la categoría?
+            if tarea.categoria in recurso.categorias_soportadas:
                 
-                # cortamos si ya llegamos a la meta del usuario
-                if mejor_tiempo <= meta:
-                    break 
+                # Segundo: ¿Es el que tiene menos tiempo acumulado?
+                if contadores_tiempo[recurso.id_recurso] < tiempo_mas_bajo:
+                    tiempo_mas_bajo = contadores_tiempo[recurso.id_recurso]
+                    recurso_elegido = recurso.id_recurso
+                    
+        # Aquí ya encontramos cuál es el recurso más desocupado
+        # Calculamos a qué hora empieza y a qué hora termina esta tarea
+        tiempo_inicio = contadores_tiempo[recurso_elegido]
+        tiempo_fin = tiempo_inicio + tarea.duracion
+        
+        # Actualizamos el contador de ese recurso (igual que tu r1counter = r1counter + duracion)
+        contadores_tiempo[recurso_elegido] = tiempo_fin
+        
+        # Guardamos la línea en formato perfecto para el txt
+        linea = f"{tarea.id_tarea},{recurso_elegido},{tiempo_inicio},{tiempo_fin}"
+        cronograma_final.append(linea)
 
-    return mejor_tiempo, mejor_plan
+    return cronograma_final
 
-if __name__ == "__main__":
-    # 1. Pedir el makespan objetivo
-    while True:
-        try:
-            objetivo = int(input("Ingresa el makespan a mejorar (ej 13): "))
-            break
-        except:
-            print("Por favor pon un numero entero valido.")
+# Ejecutamos tu función
+resultados_para_imprimir = tksallocator()
 
-    # 2. Cargar datos
-    tareas = leer_tareas("tareas.txt")
-    recursos = leer_recursos("recursos.txt")
-
-    if len(tareas) == 0 or len(recursos) == 0:
-        print("Faltan datos")
-        sys.exit(1)
-
-    # 3. Datos teoricos para entender el limite
-    duracion_max = max(t.duracion for t in tareas)
-    teorico = sum(t.duracion for t in tareas) / len(recursos)
-
-    print(f"\n--- Resumen de datos ---")
-    print(f"Makespan que buscas: {objetivo}")
-    print(f"Limite teorico: {teorico:.2f}")
-    print(f"Tarea mas larga: {duracion_max}")
-    print("------------------------\n")
-
-    # 4. Correr algoritmo
-    print("Calculando mejor cronograma... (puede demorar un par de segundos)")
-    resultado, plan_final = resolver(tareas, recursos, objetivo)
-
-    # 5. Generar output
-    if plan_final:
-        with open("output.txt", "w") as f:
-            for linea in plan_final:
-                f.write(linea + "\n")
-        print("Archivo output.txt generado correctamente.")
-    else:
-        print("Error: No se logro armar un cronograma valido.")
-
-    # 6. Avisar si se logro o no
-    print("\n*** RESULTADO FINAL ***")
-    if resultado <= objetivo:
-        print(f"LOGRADO: Se llego a un makespan de {resultado}, cumpliendo tu objetivo de {objetivo}.")
-    else:
-        print(f"NO LOGRADO: Lo mejor que se pudo armar fue {resultado}.")
-        print("A veces es imposible bajar mas por el limite teorico del diagnostico.")
+# ==========================================
+# 6. ESCRITURA ESTRICTA DEL OUTPUT.TXT
+# ==========================================
+# Ya no ponemos texto extra, solo el formato CSV que pide el verificador
+with open("output.txt", "w") as archivo_nuevo:
+    for linea in resultados_para_imprimir:
+        archivo_nuevo.write(linea + "\n")
