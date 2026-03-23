@@ -2,51 +2,75 @@
 
 ```mermaid
 flowchart TD
-    A[Inicio] --> B[Definir clases Tarea y Recurso]
-    B --> C[Leer tareas.txt]
-    C --> D[Crear objetos Tarea]
-    D --> E[Leer recursos.txt]
-    E --> F[Crear objetos Recurso]
+    A[Inicio] --> B[Solicitar makespan objetivo al usuario]
+    B --> C{Es un entero válido?}
+    C -- No --> D[Mostrar error y volver a pedir]
+    D --> B
+    C -- Sí --> E[Guardar objetivo]
 
-    F --> G{Se entregó argumento por línea de comandos?}
-    G -- No --> H[Mostrar mensaje de uso]
-    H --> I[Terminar programa]
-    G -- Sí --> J[Guardar makespan_objetivo]
+    E --> F[Leer tareas_EP.txt]
+    F --> G{Archivo válido?}
+    G -- No --> H[Mostrar error y terminar]
+    G -- Sí --> I[Crear lista de tareas]
 
-    J --> K[Ordenar tareas por duración descendente LPT]
-    K --> L[Entrar a tksallocator]
+    I --> J[Leer recursos_EP.txt]
+    J --> K{Archivo válido?}
+    K -- No --> H
+    K -- Sí --> L[Crear lista de recursos]
 
-    L --> M[Inicializar contadores de tiempo por recurso en 0]
-    M --> N[Inicializar cronograma_final vacío]
-    N --> O[Recorrer cada tarea]
+    L --> M{Hay tareas y recursos?}
+    M -- No --> N[Mostrar Faltan datos y terminar]
+    M -- Sí --> O[Calcular duración máxima]
+    O --> P[Calcular límite teórico]
+    P --> Q[Mostrar resumen de datos]
 
-    O --> P[Inicializar recurso_elegido vacío]
-    P --> Q[Inicializar tiempo_mas_bajo alto]
-    Q --> R[Recorrer cada recurso]
+    Q --> R[Entrar a resolver]
+    R --> S[Inicializar mejor_tiempo = infinito]
+    S --> T[Inicializar mejor_plan vacío]
+    T --> U[Repetir hasta iteraciones]
 
-    R --> S{El recurso soporta la categoría de la tarea?}
-    S -- No --> T[Revisar siguiente recurso]
-    T --> U{Quedan recursos?}
-    U -- Sí --> R
-    U -- No --> V[Usar recurso_elegido encontrado]
+    U --> V[Inicializar cargas por recurso en 0]
+    V --> W[Inicializar plan_actual vacío]
+    W --> X[Ordenar tareas por compatibilidad y duración con aleatoriedad]
 
-    S -- Sí --> W{Su tiempo acumulado es menor al mínimo actual?}
-    W -- No --> T
-    W -- Sí --> X[Actualizar tiempo_mas_bajo]
-    X --> Y[Actualizar recurso_elegido]
-    Y --> T
+    X --> Y[Recorrer tareas ordenadas]
+    Y --> Z[Filtrar recursos compatibles]
 
-    V --> Z[Calcular tiempo_inicio]
-    Z --> AA[Calcular tiempo_fin = inicio + duración]
-    AA --> AB[Actualizar contador del recurso]
-    AB --> AC[Guardar línea en cronograma_final]
+    Z --> AA{Hay recursos compatibles?}
+    AA -- No --> AB[Marcar se_pudo = False]
+    AB --> AC[Descartar iteración actual]
+    AC --> U
 
-    AC --> AD{Quedan tareas?}
-    AD -- Sí --> O
-    AD -- No --> AE[Calcular makespan_final]
+    AA -- Sí --> AD[Elegir recurso con menor carga]
+    AD --> AE[Calcular inicio]
+    AE --> AF[Calcular fin]
+    AF --> AG[Actualizar carga del recurso]
+    AG --> AH[Guardar asignación en plan_actual]
 
-    AE --> AF[Mostrar makespan objetivo y makespan logrado]
-    AF --> AG[Retornar cronograma_final]
-    AG --> AH[Escribir output.txt]
-    AH --> AI[Fin]
+    AH --> AI{Quedan tareas?}
+    AI -- Sí --> Y
+    AI -- No --> AJ[Calcular tiempo_max]
+
+    AJ --> AK{tiempo_max mejora mejor_tiempo?}
+    AK -- No --> U
+    AK -- Sí --> AL[Guardar mejor_tiempo y mejor_plan]
+
+    AL --> AM{mejor_tiempo menor o igual a meta?}
+    AM -- Sí --> AN[Salir antes del ciclo]
+    AM -- No --> U
+
+    AN --> AO[Retornar mejor_tiempo y mejor_plan]
+    U -->|fin de iteraciones| AO
+
+    AO --> AP{Existe plan_final?}
+    AP -- Sí --> AQ[Escribir output.txt]
+    AP -- No --> AR[Mostrar error de cronograma inválido]
+
+    AQ --> AS[Mostrar resultado final]
+    AR --> AS
+    AS --> AT{resultado menor o igual a objetivo?}
+    AT -- Sí --> AU[Mostrar LOGRADO]
+    AT -- No --> AV[Mostrar NO LOGRADO]
+    AU --> AW[Fin]
+    AV --> AW
     Y --> Z[Fin]
