@@ -94,13 +94,14 @@ def resolver(tareas, recursos, meta, iteraciones=2000):
     return mejor_tiempo, mejor_plan
 
 if __name__ == "__main__":
-    # 1. Pedir el makespan objetivo
+    # 1. Pedir interactivamente el objetivo al usuario
     while True:
         try:
-            objetivo = int(input("Ingresa el makespan a mejorar (ej 13): "))
-            break
-        except:
-            print("Por favor pon un numero entero valido.")
+            entrada = input("\n🎯 Ingresa el makespan objetivo que deseas alcanzar (ej. 13): ")
+            makespan_objetivo = int(entrada)
+            break # Si ingresó un número válido, salimos del bucle
+        except ValueError:
+            print("⚠️ Por favor, ingresa un número entero válido.")
 
     # 2. Cargar datos
     tareas = leer_tareas("tareas.txt")
@@ -110,33 +111,35 @@ if __name__ == "__main__":
         print("Faltan datos")
         sys.exit(1)
 
-    # 3. Datos teoricos para entender el limite
-    duracion_max = max(t.duracion for t in tareas)
-    teorico = sum(t.duracion for t in tareas) / len(recursos)
+    # 3. Diagnóstico rápido
+    print(f"\n--- DIAGNÓSTICO ---")
+    print(f"Makespan Objetivo Solicitado: {makespan_objetivo}")
+    print(f"Cota inferior teórica (límite matemático): {sum(t.duracion for t in tareas) / len(recursos):.2f}")
+    print(f"Duración máxima de una tarea: {max(t.duracion for t in tareas)}")
+    print("-------------------\n")
 
-    print(f"\n--- Resumen de datos ---")
-    print(f"Makespan que buscas: {objetivo}")
-    print(f"Limite teorico: {teorico:.2f}")
-    print(f"Tarea mas larga: {duracion_max}")
-    print("------------------------\n")
+    # 4. Correr el algoritmo (ahora le pasamos el makespan_objetivo)
+    print("Calculando mejor cronograma (probando miles de combinaciones)...")
+    makespan_final, cronograma_final = buscar_mejor_cronograma(tareas, recursos, makespan_objetivo)
 
-    # 4. Correr algoritmo
-    print("Calculando mejor cronograma... (puede demorar un par de segundos)")
-    resultado, plan_final = resolver(tareas, recursos, objetivo)
-
-    # 5. Generar output
-    if plan_final:
-        with open("output.txt", "w") as f:
-            for linea in plan_final:
-                f.write(linea + "\n")
-        print("Archivo output.txt generado correctamente.")
+    # 5. Guardar resultado
+    if cronograma_final:
+        with open("output.txt", "w") as archivo:
+            # Documentación del formato para quien lea el código:
+            # 1: ID de la tarea, 2: ID del recurso, 3: Inicio, 4: Fin
+            for linea in cronograma_final:
+                archivo.write(f"{linea}\n")
+        print(f"✅ ¡Éxito! Archivo output.txt generado correctamente.")
     else:
-        print("Error: No se logro armar un cronograma valido.")
+        print("❌ Error: No se pudo generar un cronograma válido.")
 
-    # 6. Avisar si se logro o no
-    print("\n*** RESULTADO FINAL ***")
-    if resultado <= objetivo:
-        print(f"LOGRADO: Se llego a un makespan de {resultado}, cumpliendo tu objetivo de {objetivo}.")
+    # 6. Evaluación final (Logrado o No Logrado)
+    print("\n==================================")
+    print(f"📊 RESULTADO FINAL: {makespan_final}")
+    print("==================================")
+    
+    if makespan_final <= makespan_objetivo:
+        print(f"🏆 ¡LOGRADO! El algoritmo alcanzó un makespan de {makespan_final}, cumpliendo tu objetivo de {makespan_objetivo}.")
     else:
-        print(f"NO LOGRADO: Lo mejor que se pudo armar fue {resultado}.")
-        print("A veces es imposible bajar mas por el limite teorico del diagnostico.")
+        print(f"🛑 NO LOGRADO. El mejor makespan posible fue {makespan_final}. No se pudo alcanzar tu objetivo de {makespan_objetivo}.")
+        print("💡 Recuerda: Revisa la cota teórica en el diagnóstico. A veces es físicamente imposible bajar más.")
