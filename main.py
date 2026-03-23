@@ -1,7 +1,11 @@
 import sys
+import random
 from dataclasses import dataclass
-from typing import List
+from typing import List, Tuple
 
+# ==========================================
+# 1. DEFINICIÓN DE ESTRUCTURAS DE DATOS
+# ==========================================
 @dataclass
 class Tarea:
     id_tarea: str
@@ -11,89 +15,152 @@ class Tarea:
 @dataclass
 class Recurso:
     id_recurso: str
-    categorias_soportadas: StopIteration
+    categorias_soportadas: List[str]
 
-with open("tareas.txt", "r") as i:
+# ==========================================
+# 2. FUNCIONES DE LECTURA DE ARCHIVOS
+# ==========================================
+def cargar_tareas(ruta: str) -> List[Tarea]:
+    """Lee el archivo de tareas y crea una lista de objetos Tarea."""
     tareas = []
-    for line in i:
-        id_tarea, duracion, categoria = line.strip().split(",")
-        tareas.append((id_tarea, int(duracion), categoria))
+    try:
+        with open(ruta, "r") as archivo:
+            for linea in archivo:
+                if linea.strip(): # Ignora líneas en blanco
+                    id_tarea, duracion, categoria = linea.strip().split(",")
+                    tareas.append(Tarea(id_tarea, int(duracion), categoria))
+        return tareas
+    except FileNotFoundError:
+        print(f"Error: No se encontró '{ruta}'.")
+        sys.exit(1)
 
-with open("recursos.txt", "r") as j:
+def cargar_recursos(ruta: str) -> List[Recurso]:
+    """Lee el archivo de recursos y crea una lista de objetos Recurso."""
     recursos = []
-    for line in j:
-        id_recursos, categoria= line.strip().split(",")
-        recursos.append((id_recursos, categoria))
+    try:
+        with open(ruta, "r") as archivo:
+            for linea in archivo:
+                if linea.strip():
+                    partes = linea.strip().split(",")
+                    recursos.append(Recurso(partes[0], partes[1:]))
+        return recursos
+    except FileNotFoundError:
+        print(f"Error: No se encontró '{ruta}'.")
+        sys.exit(1)
 
-for i in range(len(recursos)):
-    #print(recursos[i])
-    pass
-print(" ")
-for i in range(len(tareas)):
-    #print(tareas[i])
-    pass
-tkstime=0
-for i in range(len(tareas)):
-    tkstime=tkstime+tareas[i][1]
-print(tkstime)
+# ==========================================
+# 3. LÓGICA DEL ALGORITMO (EL CORAZÓN DEL CÓDIGO)
+# ==========================================
+def contar_compatibles(tarea: Tarea, recursos: List[Recurso]) -> int:
+    """Cuenta cuántos recursos pueden hacer una tarea (para saber qué tan restrictiva es)."""
+    return sum(1 for r in recursos if tarea.categoria in r.categorias_soportadas)
 
-r1queue=[]
-r2queue=[]
-r3queue=[]
+def buscar_mejor_cronograma(tareas: List[Tarea], recursos: List[Recurso], makespan_objetivo: int, iteraciones: int = 2000) -> Tuple[int, List[str]]:
+    """
+    Busca la mejor asignación posible probando miles de combinaciones.
+    Como el problema es NP-Hard, usamos aleatoriedad para explorar opciones rápidamente.
+    """
+    mejor_makespan = float('inf')
+    mejor_cronograma = []
 
-def tksallocator():
-    r1counter=0
-    r2counter=0
-    r3counter=0
-    i=0
-    while True:
+    for _ in range(iteraciones):
+        # Diccionario para llevar el tiempo en que se desocupa cada recurso
+        cargas = {r.id_recurso: 0 for r in recursos}
+        cronograma_actual = []
         
-        if tareas[i][2]=='CAT_A'and r1counter<=r2counter and r1counter<=r3counter:
-            r1counter=r1counter+tareas[i][1]
-            r1queue.append(tareas[i][0])
-            #tareas.remove(tareas[i])
-            #print(f"el contador del R1 es:{r1counter}")
-            i=i+1
-            #print(f"el valor de pivote es 1:{i}")
-            if i==8:
-                break
-        elif tareas[i][2]=='CAT_A' and r1counter > r2counter:
-            r2counter=r2counter+tareas[i][1]
-            r2queue.append(tareas[i][0])
-            #tareas.remove(tareas[i])
-            #print(f"el contador del R2 es:{r2counter}")
-            i=i+1
-            #print(f"el valor de pivote es 2:{i}")
-            if i==8:
-                break
-        elif tareas[i][2]=='CAT_A' and r2counter > r3counter and r1counter>r3counter:
-            r3counter=r3counter+tareas[i][1]
-            r3queue.append(tareas[i][0])
-            #tareas.remove(tareas[i])
-            #print(f"el contador del R3 es:{r3counter}")
-            i=i+1
-            #print(f"el valor de pivote es 3:{i}")
-            if i==8:
-                break
-    print(f"valor total de los counters: {r1counter+r2counter+r3counter}")
-    print(f"Tiempo trabjando por R1: {r1counter}")        
-    print(f"Tiempo trabjando por R2: {r2counter}")
-    print(f"Tiempo trabjando por R3: {r3counter}")           
-    print(f"Tareas asignadas a R1: {r1queue}")
-    print(f"Tareas asignadas a R2: {r2queue}")
-    print(f"Tareas asignadas a R3: {r3queue}")
-    print(f"Makespan actual es:{max(r1counter,r2counter,r3counter)}")
-    return(r1counter,r2counter,r3counter)
-tksallocator()  
+        # ESTRATEGIA: Ordenar tareas. 
+        # 1. Primero las que tienen menos recursos compatibles (son más difíciles de ubicar).
+        # 2. Segundo por duración (las más largas primero), pero con un factor aleatorio 
+        #    para generar combinaciones distintas en cada iteración.
+        tareas_ordenadas = sorted(
+            tareas,
+            key=lambda t: (contar_compatibles(t, recursos), -t.duracion + random.uniform(-3, 3))
+        )
 
-r1counter, r2counter, r3counter = tksallocator()
+        exito = True
+        for tarea in tareas_ordenadas:
+            # Filtrar solo los recursos que saben hacer esta tarea
+            recursos_utiles = [r for r in recursos if tarea.categoria in r.categorias_soportadas]
 
-with open("mis_resultados.txt", "w") as archivo_nuevo:
-    archivo_nuevo.write("Archivo con los resultados del algortimo y las asignación de tareas.\n")
-    archivo_nuevo.write("Esta es la segunda línea.")
-    archivo_nuevo.write(f"Tiempo trabjando por R1: {r1counter}")        
-    archivo_nuevo.write(f"Tiempo trabjando por R2: {r2counter}")
-    archivo_nuevo.write(f"Tiempo trabjando por R3: {r3counter}")           
-    archivo_nuevo.write(f"Tareas asignadas a R1: {r1queue}")
-    archivo_nuevo.write(f"Tareas asignadas a R2: {r2queue}")
-    archivo_nuevo.write(f"Tareas asignadas a R3: {r3queue}")
+            if not recursos_utiles:
+                exito = False
+                break # Si una tarea no tiene recurso, este intento fracasa
+
+            # Asignar la tarea al recurso que termine más temprano (Greedy)
+            mejor_recurso = min(recursos_utiles, key=lambda r: cargas[r.id_recurso])
+            
+            # Calcular tiempos
+            tiempo_inicio = cargas[mejor_recurso.id_recurso]
+            tiempo_fin = tiempo_inicio + tarea.duracion
+            
+            # Actualizar la carga del recurso elegido
+            cargas[mejor_recurso.id_recurso] = tiempo_fin
+            
+            # Formato estricto para output.txt: ID_TAREA, ID_RECURSO, TIEMPO_INICIO, TIEMPO_TERMINO
+            cronograma_actual.append(f"{tarea.id_tarea},{mejor_recurso.id_recurso},{tiempo_inicio},{tiempo_fin}")
+
+        # Evaluar si esta iteración es la mejor que hemos visto hasta ahora
+        if exito:
+            makespan_actual = max(cargas.values())
+            if makespan_actual < mejor_makespan:
+                mejor_makespan = makespan_actual
+                mejor_cronograma = cronograma_actual
+                
+                # Si logramos llegar o mejorar el objetivo pedido por el usuario, cortamos para ahorrar tiempo
+                if mejor_makespan <= makespan_objetivo:
+                    break 
+
+    return mejor_makespan, mejor_cronograma
+
+# ==========================================
+# 4. EJECUCIÓN PRINCIPAL
+# ==========================================
+if __name__ == "__main__":
+    # 1. Pedir interactivamente el objetivo al usuario
+    while True:
+        try:
+            entrada = input("\n🎯 Ingresa el makespan objetivo que deseas alcanzar (ej. 13): ")
+            makespan_objetivo = int(entrada)
+            break # Si ingresó un número válido, salimos del bucle
+        except ValueError:
+            print("⚠️ Por favor, ingresa un número entero válido.")
+
+    # 2. Cargar datos
+    tareas = cargar_tareas("tareas.txt")
+    recursos = cargar_recursos("recursos.txt")
+
+    if not tareas or not recursos:
+        sys.exit(1)
+
+    # 3. Diagnóstico rápido
+    print(f"\n--- DIAGNÓSTICO ---")
+    print(f"Makespan Objetivo Solicitado: {makespan_objetivo}")
+    print(f"Cota inferior teórica (límite matemático): {sum(t.duracion for t in tareas) / len(recursos):.2f}")
+    print(f"Duración máxima de una tarea: {max(t.duracion for t in tareas)}")
+    print("-------------------\n")
+
+    # 4. Correr el algoritmo (ahora le pasamos el makespan_objetivo)
+    print("Calculando mejor cronograma (probando miles de combinaciones)...")
+    makespan_final, cronograma_final = buscar_mejor_cronograma(tareas, recursos, makespan_objetivo)
+
+    # 5. Guardar resultado
+    if cronograma_final:
+        with open("output.txt", "w") as archivo:
+            # Documentación del formato para quien lea el código:
+            # 1: ID de la tarea, 2: ID del recurso, 3: Inicio, 4: Fin
+            for linea in cronograma_final:
+                archivo.write(f"{linea}\n")
+        print(f"✅ ¡Éxito! Archivo output.txt generado correctamente.")
+    else:
+        print("❌ Error: No se pudo generar un cronograma válido.")
+
+    # 6. Evaluación final (Logrado o No Logrado)
+    print("\n==================================")
+    print(f"📊 RESULTADO FINAL: {makespan_final}")
+    print("==================================")
+    
+    if makespan_final <= makespan_objetivo:
+        print(f"🏆 ¡LOGRADO! El algoritmo alcanzó un makespan de {makespan_final}, cumpliendo tu objetivo de {makespan_objetivo}.")
+    else:
+        print(f"🛑 NO LOGRADO. El mejor makespan posible fue {makespan_final}. No se pudo alcanzar tu objetivo de {makespan_objetivo}.")
+        print("💡 Recuerda: Revisa la cota teórica en el diagnóstico. A veces es físicamente imposible bajar más.")

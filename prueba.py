@@ -1,10 +1,11 @@
 import sys
+import random
 from dataclasses import dataclass
-from typing import List, Dict
+from typing import List, Tuple
 
-# -------------------------
-# Definición de clases
-# -------------------------
+# ==========================================
+# 1. DEFINICIÓN DE ESTRUCTURAS DE DATOS
+# ==========================================
 @dataclass
 class Tarea:
     id_tarea: str
@@ -16,99 +17,150 @@ class Recurso:
     id_recurso: str
     categorias_soportadas: List[str]
 
-# -------------------------
-# Lectura de tareas
-# -------------------------
-tareas: List[Tarea] = []
+# ==========================================
+# 2. FUNCIONES DE LECTURA DE ARCHIVOS
+# ==========================================
+def cargar_tareas(ruta: str) -> List[Tarea]:
+    """Lee el archivo de tareas y crea una lista de objetos Tarea."""
+    tareas = []
+    try:
+        with open(ruta, "r") as archivo:
+            for linea in archivo:
+                if linea.strip(): # Ignora líneas en blanco
+                    id_tarea, duracion, categoria = linea.strip().split(",")
+                    tareas.append(Tarea(id_tarea, int(duracion), categoria))
+        return tareas
+    except FileNotFoundError:
+        print(f"Error: No se encontró '{ruta}'.")
+        sys.exit(1)
 
-with open("tareas.txt", "r") as archivo:
-    for linea in archivo:
-        id_tarea, duracion, categoria = linea.strip().split(",")
-        tarea = Tarea(id_tarea, int(duracion), categoria)
-        tareas.append(tarea)
+def cargar_recursos(ruta: str) -> List[Recurso]:
+    """Lee el archivo de recursos y crea una lista de objetos Recurso."""
+    recursos = []
+    try:
+        with open(ruta, "r") as archivo:
+            for linea in archivo:
+                if linea.strip():
+                    partes = linea.strip().split(",")
+                    recursos.append(Recurso(partes[0], partes[1:]))
+        return recursos
+    except FileNotFoundError:
+        print(f"Error: No se encontró '{ruta}'.")
+        sys.exit(1)
 
-# -------------------------
-# Lectura de recursos
-# -------------------------
-recursos: List[Recurso] = []
+# ==========================================
+# 3. LÓGICA DEL ALGORITMO (EL CORAZÓN DEL CÓDIGO)
+# ==========================================
+def contar_compatibles(tarea: Tarea, recursos: List[Recurso]) -> int:
+    """Cuenta cuántos recursos pueden hacer una tarea (para saber qué tan restrictiva es)."""
+    return sum(1 for r in recursos if tarea.categoria in r.categorias_soportadas)
 
-with open("recursos.txt", "r") as archivo:
-    for linea in archivo:
-        partes = linea.strip().split(",")
-        id_recurso = partes[0]
-        categorias = partes[1:]  # puede tener una o más categorías
-        recurso = Recurso(id_recurso, categorias)
-        recursos.append(recurso)
+def buscar_mejor_cronograma(tareas: List[Tarea], recursos: List[Recurso], makespan_objetivo: int, iteraciones: int = 2000) -> Tuple[int, List[str]]:
+    """
+    Busca la mejor asignación posible probando miles de combinaciones.
+    Como el problema es NP-Hard, usamos aleatoriedad para explorar opciones rápidamente.
+    """
+    mejor_makespan = float('inf')
+    mejor_cronograma = []
 
-# -------------------------
-# Inicialización de estructuras
-# -------------------------
-cargas: Dict[str, int] = {}        # tiempo acumulado por recurso
-cronograma_final: List[str] = []   # 🔥 NUEVO: Aquí guardaremos las líneas exactas para el txt
-
-for r in recursos:
-    cargas[r.id_recurso] = 0
-
-# -------------------------
-# Función de asignación
-# -------------------------
-def asignar_tareas(tareas: List[Tarea], recursos: List[Recurso]) -> None:
-
-    # 🔥 PASO CLAVE: ordenar tareas de mayor a menor duración
-    tareas_ordenadas = sorted(tareas, key=lambda t: t.duracion, reverse=True)
-
-    for tarea in tareas_ordenadas:
-
-        # Buscar recursos que puedan ejecutar la tarea
-        recursos_compatibles = []
-        for r in recursos:
-            if tarea.categoria in r.categorias_soportadas:
-                recursos_compatibles.append(r)
-
-        # Si no hay recurso compatible
-        if len(recursos_compatibles) == 0:
-            print(f"No hay recurso disponible para la tarea {tarea.id_tarea}")
-            continue
-
-        # Elegir el recurso con menor carga acumulada
-        mejor_recurso = recursos_compatibles[0]
-        for r in recursos_compatibles:
-            if cargas[r.id_recurso] < cargas[mejor_recurso.id_recurso]:
-                mejor_recurso = r
-
-        # 🔥 CALCULAR TIEMPOS PARA EL ARCHIVO DE SALIDA
-        tiempo_inicio = cargas[mejor_recurso.id_recurso]
-        tiempo_fin = tiempo_inicio + tarea.duracion
-
-        # Asignar tarea al recurso elegido (actualizar el reloj de ese recurso)
-        cargas[mejor_recurso.id_recurso] = tiempo_fin
+    for _ in range(iteraciones):
+        # Diccionario para llevar el tiempo en que se desocupa cada recurso
+        cargas = {r.id_recurso: 0 for r in recursos}
+        cronograma_actual = []
         
-        # Guardar la línea con el formato exacto que pide el profesor
-        linea_csv = f"{tarea.id_tarea},{mejor_recurso.id_recurso},{tiempo_inicio},{tiempo_fin}"
-        cronograma_final.append(linea_csv)
+        # ESTRATEGIA: Ordenar tareas. 
+        # 1. Primero las que tienen menos recursos compatibles (son más difíciles de ubicar).
+        # 2. Segundo por duración (las más largas primero), pero con un factor aleatorio 
+        #    para generar combinaciones distintas en cada iteración.
+        tareas_ordenadas = sorted(
+            tareas,
+            key=lambda t: (contar_compatibles(t, recursos), -t.duracion + random.uniform(-3, 3))
+        )
 
-# -------------------------
-# Ejecución del programa
-# -------------------------
-# 🔥 REGLA: El programa debe recibir un argumento en consola (ej: python prueba.py 12)
-if len(sys.argv) < 2:
-    print("Uso: python prueba.py <makespan_objetivo>")
-    sys.exit(1) # Detenemos el programa si no lo ejecutan correctamente
+        exito = True
+        for tarea in tareas_ordenadas:
+            # Filtrar solo los recursos que saben hacer esta tarea
+            recursos_utiles = [r for r in recursos if tarea.categoria in r.categorias_soportadas]
 
-makespan_objetivo = sys.argv[1] # Capturamos el número, aunque no lo usemos para calcular, debe estar ahí.
+            if not recursos_utiles:
+                exito = False
+                break # Si una tarea no tiene recurso, este intento fracasa
 
-# Corremos el algoritmo
-asignar_tareas(tareas, recursos)
-makespan_logrado = max(cargas.values())
+            # Asignar la tarea al recurso que termine más temprano (Greedy)
+            mejor_recurso = min(recursos_utiles, key=lambda r: cargas[r.id_recurso])
+            
+            # Calcular tiempos
+            tiempo_inicio = cargas[mejor_recurso.id_recurso]
+            tiempo_fin = tiempo_inicio + tarea.duracion
+            
+            # Actualizar la carga del recurso elegido
+            cargas[mejor_recurso.id_recurso] = tiempo_fin
+            
+            # Formato estricto para output.txt: ID_TAREA, ID_RECURSO, TIEMPO_INICIO, TIEMPO_TERMINO
+            cronograma_actual.append(f"{tarea.id_tarea},{mejor_recurso.id_recurso},{tiempo_inicio},{tiempo_fin}")
 
-# -------------------------
-# Guardar resultados en archivo
-# -------------------------
-# 🔥 REGLA: El archivo DEBE llamarse output.txt y no tener ningún encabezado
-with open("output.txt", "w") as archivo:
-    for linea in cronograma_final:
-        archivo.write(f"{linea}\n")
+        # Evaluar si esta iteración es la mejor que hemos visto hasta ahora
+        if exito:
+            makespan_actual = max(cargas.values())
+            if makespan_actual < mejor_makespan:
+                mejor_makespan = makespan_actual
+                mejor_cronograma = cronograma_actual
+                
+                # Si logramos llegar o mejorar el objetivo pedido por el usuario, cortamos para ahorrar tiempo
+                if mejor_makespan <= makespan_objetivo:
+                    break 
 
-print(f"\n¡Archivo output.txt generado correctamente! ✅")
-print(f"Makespan logrado: {makespan_logrado}")
-print(f"Makespan objetivo solicitado en consola: {makespan_objetivo}")
+    return mejor_makespan, mejor_cronograma
+
+# ==========================================
+# 4. EJECUCIÓN PRINCIPAL
+# ==========================================
+if __name__ == "__main__":
+    # 1. Pedir interactivamente el objetivo al usuario
+    while True:
+        try:
+            entrada = input("\n🎯 Ingresa el makespan objetivo que deseas alcanzar (ej. 13): ")
+            makespan_objetivo = int(entrada)
+            break # Si ingresó un número válido, salimos del bucle
+        except ValueError:
+            print("⚠️ Por favor, ingresa un número entero válido.")
+
+    # 2. Cargar datos
+    tareas = cargar_tareas("tareas.txt")
+    recursos = cargar_recursos("recursos.txt")
+
+    if not tareas or not recursos:
+        sys.exit(1)
+
+    # 3. Diagnóstico rápido
+    print(f"\n--- DIAGNÓSTICO ---")
+    print(f"Makespan Objetivo Solicitado: {makespan_objetivo}")
+    print(f"Cota inferior teórica (límite matemático): {sum(t.duracion for t in tareas) / len(recursos):.2f}")
+    print(f"Duración máxima de una tarea: {max(t.duracion for t in tareas)}")
+    print("-------------------\n")
+
+    # 4. Correr el algoritmo (ahora le pasamos el makespan_objetivo)
+    print("Calculando mejor cronograma (probando miles de combinaciones)...")
+    makespan_final, cronograma_final = buscar_mejor_cronograma(tareas, recursos, makespan_objetivo)
+
+    # 5. Guardar resultado
+    if cronograma_final:
+        with open("output.txt", "w") as archivo:
+            # Documentación del formato para quien lea el código:
+            # 1: ID de la tarea, 2: ID del recurso, 3: Inicio, 4: Fin
+            for linea in cronograma_final:
+                archivo.write(f"{linea}\n")
+        print(f"✅ ¡Éxito! Archivo output.txt generado correctamente.")
+    else:
+        print("❌ Error: No se pudo generar un cronograma válido.")
+
+    # 6. Evaluación final (Logrado o No Logrado)
+    print("\n==================================")
+    print(f"📊 RESULTADO FINAL: {makespan_final}")
+    print("==================================")
+    
+    if makespan_final <= makespan_objetivo:
+        print(f"🏆 ¡LOGRADO! El algoritmo alcanzó un makespan de {makespan_final}, cumpliendo tu objetivo de {makespan_objetivo}.")
+    else:
+        print(f"🛑 NO LOGRADO. El mejor makespan posible fue {makespan_final}. No se pudo alcanzar tu objetivo de {makespan_objetivo}.")
+        print("💡 Recuerda: Revisa la cota teórica en el diagnóstico. A veces es físicamente imposible bajar más.")
