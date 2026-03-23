@@ -41,7 +41,7 @@ with open("recursos.txt", "r") as j:
 # ==========================================
 # 3. REGLA OBLIGATORIA DEL ENUNCIADO
 # ==========================================
-# El profe ejecutará: python main.py <makespan_objetivo>
+
 if len(sys.argv) > 1:
     makespan_objetivo = sys.argv[1]
 else:
@@ -58,15 +58,12 @@ tareas.sort(key=lambda t: t.duracion, reverse=True)
 # 5. TU FUNCIÓN ASIGNADORA (Sin hardcoding)
 # ==========================================
 def tksallocator():
-    # En vez de crear r1counter=0, r2counter=0 a mano, creamos un diccionario.
-    # Si hay 3 recursos, esto crea los 3 contadores. Si hay 20, crea 20.
     contadores_tiempo = {}
     for r in recursos:
         contadores_tiempo[r.id_recurso] = 0
         
     cronograma_final = []
 
-    # En vez de tu "while True" con el "if i==8: break", usamos un "for".
     # Así recorre TODAS las tareas sin importar si son 8 o 1000.
     for tarea in tareas:
         
@@ -74,7 +71,6 @@ def tksallocator():
         recurso_elegido = ""
         tiempo_mas_bajo = 999999 # Partimos con un número alto
         
-        # Este ciclo reemplaza a tus "if r1 <= r2 and r1 <= r3"
         for recurso in recursos:
             # Primero: ¿Soporta la categoría?
             if tarea.categoria in recurso.categorias_soportadas:
@@ -102,7 +98,7 @@ def tksallocator():
 
     return cronograma_final
 
-# Ejecutamos tu función
+# Ejecutamos la función
 resultados_para_imprimir = tksallocator()
 
 # ==========================================
