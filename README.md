@@ -2,46 +2,51 @@
 
 ```mermaid
 flowchart TD
-    A[Inicio] --> B[Leer tareas.txt]
-    B --> C[Leer recursos.txt]
-    C --> D[Crear lista de tareas y recursos]
+    A[Inicio] --> B[Definir clases Tarea y Recurso]
+    B --> C[Leer tareas.txt]
+    C --> D[Crear objetos Tarea]
+    D --> E[Leer recursos.txt]
+    E --> F[Crear objetos Recurso]
 
-    D --> E[Inicializar mejor_makespan = infinito]
-    E --> F[Repetir varias iteraciones]
+    F --> G{Se entregó argumento por línea de comandos?}
+    G -- No --> H[Mostrar mensaje de uso]
+    H --> I[Terminar programa]
+    G -- Sí --> J[Guardar makespan_objetivo]
 
-    F --> G[Inicializar carga de cada recurso en 0]
-    G --> H[Ordenar tareas]
+    J --> K[Ordenar tareas por duración descendente LPT]
+    K --> L[Entrar a tksallocator]
 
-    H --> H1[Priorizar tareas con menos recursos compatibles]
-    H1 --> H2[Luego priorizar tareas de mayor duración]
-    H2 --> H3[Agregar pequeña aleatoriedad]
+    L --> M[Inicializar contadores de tiempo por recurso en 0]
+    M --> N[Inicializar cronograma_final vacío]
+    N --> O[Recorrer cada tarea]
 
-    H3 --> I[Recorrer tareas ordenadas]
-    I --> J[Buscar recursos compatibles con la categoría]
+    O --> P[Inicializar recurso_elegido vacío]
+    P --> Q[Inicializar tiempo_mas_bajo alto]
+    Q --> R[Recorrer cada recurso]
 
-    J --> K{Hay recursos compatibles?}
-    K -- No --> L[Descartar iteración]
-    L --> F
+    R --> S{El recurso soporta la categoría de la tarea?}
+    S -- No --> T[Revisar siguiente recurso]
+    T --> U{Quedan recursos?}
+    U -- Sí --> R
+    U -- No --> V[Usar recurso_elegido encontrado]
 
-    K -- Sí --> M[Elegir recurso con menor carga]
-    M --> N[Asignar tiempo inicio = carga actual]
-    N --> O[Asignar tiempo fin = inicio + duración]
-    O --> P[Actualizar carga del recurso]
-    P --> Q[Guardar asignación en cronograma]
+    S -- Sí --> W{Su tiempo acumulado es menor al mínimo actual?}
+    W -- No --> T
+    W -- Sí --> X[Actualizar tiempo_mas_bajo]
+    X --> Y[Actualizar recurso_elegido]
+    Y --> T
 
-    Q --> R{Quedan tareas?}
-    R -- Sí --> I
-    R -- No --> S[Calcular makespan actual]
+    V --> Z[Calcular tiempo_inicio]
+    Z --> AA[Calcular tiempo_fin = inicio + duración]
+    AA --> AB[Actualizar contador del recurso]
+    AB --> AC[Guardar línea en cronograma_final]
 
-    S --> T{Es mejor que el mejor_makespan?}
-    T -- Sí --> U[Guardar mejor cronograma]
-    T -- No --> V[Continuar]
+    AC --> AD{Quedan tareas?}
+    AD -- Sí --> O
+    AD -- No --> AE[Calcular makespan_final]
 
-    U --> W{Makespan menor a 10?}
-    W -- Sí --> X[Terminar búsqueda anticipadamente]
-    W -- No --> V
-
-    V --> F
-    X --> Y[Escribir output.txt]
-    F -->|Fin de iteraciones| Y
+    AE --> AF[Mostrar makespan objetivo y makespan logrado]
+    AF --> AG[Retornar cronograma_final]
+    AG --> AH[Escribir output.txt]
+    AH --> AI[Fin]
     Y --> Z[Fin]
