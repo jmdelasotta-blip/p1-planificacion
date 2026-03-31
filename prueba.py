@@ -171,3 +171,6 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+print("¡Archivo generado exitosamente!")
+print("Revisa el archivo 'output.txt' para ver el cronograma generado.")
